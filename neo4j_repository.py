@@ -1,0 +1,128 @@
+# file: neo4j_repository.py
+from neo4j import GraphDatabase
+import uuid
+from typing import List, Dict, Any, Optional
+
+
+TNode = Dict[str, Any]
+TArc = Dict[str, Any]
+
+
+class Neo4jRepository:
+    def __init__(self, uri: str, user: str, password: str) -> None:
+        self.driver = GraphDatabase.driver(uri, auth=(user, password))
+
+    def close(self) -> None:
+        self.driver.close()
+
+    def generate_random_string(self) -> str:
+        return str(uuid.uuid4())
+
+    def run_custom_query(self, query: str, params: Optional[Dict[str, Any]] = None) -> List[Dict]:
+        with self.driver.session() as session:
+            result = session.run(query, params or {})
+            return [record.data() for record in result]
+
+    def get_all_nodes(self) -> List[TNode]:
+        query = "MATCH (n) RETURN n"
+        with self.driver.session() as session:
+            result = session.run(query)
+            return [self.collect_node(record["n"]) for record in result]
+
+    def get_all_nodes_and_arcs(self) -> List[TNode]:
+        query = "MATCH (n)-[r]->(m) RETURN n, r, m"
+        nodes: Dict[str, TNode] = {}
+        with self.driver.session() as session:
+            for record in session.run(query):
+                n = self.collect_node(record["n"])
+                m = self.collect_node(record["m"])
+                r = self.collect_arc(record["r"], n["uri"], m["uri"])
+
+                if n["uri"] not in nodes:
+                    nodes[n["uri"]] = n
+                    nodes[n["uri"]]["arcs"] = []
+                if m["uri"] not in nodes:
+                    nodes[m["uri"]] = m
+                    nodes[m["uri"]]["arcs"] = []
+
+                nodes[n["uri"]]["arcs"].append(r)
+        return list(nodes.values())
+
+    def get_nodes_by_labels(self, labels: List[str]) -> List[TNode]:
+        label_str = ":".join(labels)
+        query = f"MATCH (n:{label_str}) RETURN n"
+        with self.driver.session() as session:
+            result = session.run(query)
+            return [self.collect_node(record["n"]) for record in result]
+
+    def get_node_by_uri(self, uri: str) -> Optional[TNode]:
+        query = "MATCH (n {uri: $uri}) RETURN n"
+        with self.driver.session() as session:
+            record = session.run(query, {"uri": uri}).single()
+            return self.collect_node(record["n"]) if record else None
+
+    def create_node(self, params: Dict[str, Any]) -> TNode:
+        uri = self.generate_random_string()
+        query = """
+            CREATE (n {id: randomUUID(), uri: $uri, description: $description, title: $title})
+            RETURN n
+        """
+        with self.driver.session() as session:
+            record = session.run(query, {
+                "uri": uri,
+                "description": params.get("description", ""),
+                "title": params.get("title", "")
+            }).single()
+            return self.collect_node(record["n"])
+
+    def create_arc(self, node1_uri: str, node2_uri: str, rel_type: str = "RELATED") -> TArc:
+        query = f"""
+            MATCH (a {{uri: $node1_uri}}), (b {{uri: $node2_uri}})
+            CREATE (a)-[r:{rel_type} {{id: randomUUID(), uri: $rel_type}}]->(b)
+            RETURN r
+        """
+        with self.driver.session() as session:
+            record = session.run(query, {
+                "node1_uri": node1_uri,
+                "node2_uri": node2_uri,
+                "rel_type": rel_type
+            }).single()
+            return self.collect_arc(record["r"], node1_uri, node2_uri)
+
+    def delete_node_by_uri(self, uri: str) -> None:
+        query = "MATCH (n {uri: $uri}) DETACH DELETE n"
+        with self.driver.session() as session:
+            session.run(query, {"uri": uri})
+
+    def delete_arc_by_id(self, arc_id: str) -> None:
+        query = "MATCH ()-[r]->() WHERE r.id = $id DELETE r"
+        with self.driver.session() as session:
+            session.run(query, {"id": arc_id})
+
+    def update_node(self, uri: str, params: Dict[str, Any]) -> Optional[TNode]:
+        query = """
+            MATCH (n {uri: $uri})
+            SET n += $params
+            RETURN n
+        """
+        with self.driver.session() as session:
+            record = session.run(query, {"uri": uri, "params": params}).single()
+            return self.collect_node(record["n"]) if record else None
+
+    @staticmethod
+    def collect_node(node) -> TNode:
+        return {
+            "id": node.get("id"),
+            "uri": node.get("uri"),
+            "description": node.get("description"),
+            "title": node.get("title"),
+        }
+
+    @staticmethod
+    def collect_arc(arc, node_uri_from: str, node_uri_to: str) -> TArc:
+        return {
+            "id": arc.get("id"),
+            "uri": arc.type,
+            "node_uri_from": node_uri_from,
+            "node_uri_to": node_uri_to,
+        }
