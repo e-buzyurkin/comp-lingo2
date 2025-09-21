@@ -119,10 +119,10 @@ class Neo4jRepository:
         }
 
     @staticmethod
-    def collect_arc(arc, node_uri_from: str, node_uri_to: str) -> TArc:
+    def collect_arc(arc) -> TArc:
         return {
             "id": arc.get("id"),
             "uri": arc.type,
-            "node_uri_from": node_uri_from,
-            "node_uri_to": node_uri_to,
+            "node_uri_from": arc.get("node_uri_from"),
+            "node_uri_to": arc.get("node_uri_to"),
         }
