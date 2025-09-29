@@ -1,8 +1,8 @@
-# file: neo4j_repository.py
+from pprint import pprint
+
 from neo4j import GraphDatabase
 import uuid
 from typing import List, Dict, Any, Optional
-
 
 TNode = Dict[str, Any]
 TArc = Dict[str, Any]
@@ -61,19 +61,23 @@ class Neo4jRepository:
             record = session.run(query, {"uri": uri}).single()
             return self.collect_node(record["n"]) if record else None
 
-    def create_node(self, params: Dict[str, Any]) -> TNode:
+    def create_node(self, params: Dict[str, Any], labels: Optional[List[str]] = None) -> TNode:
         uri = self.generate_random_string()
-        query = """
-            CREATE (n {id: randomUUID(), uri: $uri, description: $description, title: $title})
-            RETURN n
+
+        labels_str = ""
+        if labels:
+            labels_str = ":" + ":".join(params.labels)
+
+        query = f"""
+        CREATE (n{labels_str} {{
+            uri: $uri,
+            title: $title,
+            description: $description
+        }})
+        RETURN n
         """
-        with self.driver.session() as session:
-            record = session.run(query, {
-                "uri": uri,
-                "description": params.get("description", ""),
-                "title": params.get("title", "")
-            }).single()
-            return self.collect_node(record["n"])
+
+        self.run_custom_query(query, params)
 
     def create_arc(self, node1_uri: str, node2_uri: str, rel_type: str = "RELATED") -> TArc:
         query = f"""
@@ -126,3 +130,29 @@ class Neo4jRepository:
             "node_uri_from": arc.get("node_uri_from"),
             "node_uri_to": arc.get("node_uri_to"),
         }
+
+
+class Main:
+    def __init__(self):
+        self.repository = Neo4jRepository(
+            uri="neo4j://127.0.0.1:7687",
+            user="neo4j",
+            password="12345678"
+        )
+
+    def simple_demo(self):
+        node = self.repository.create_node({
+            "title": "Тестовый узел",
+            "description": "Это тестовый узел для демонстрации"
+        })
+
+        pprint(f"Создан узел: {node['title']}")
+        pprint(f"URI узла: {node['uri']}")
+
+        self.repository.close()
+
+
+# Создание экземпляра и вызов функции
+if __name__ == "__main__":
+    app = Main()
+    app.simple_demo()
