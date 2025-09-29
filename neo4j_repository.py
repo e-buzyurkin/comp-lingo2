@@ -1,11 +1,25 @@
+from dataclasses import dataclass
 from pprint import pprint
 
 from neo4j import GraphDatabase
 import uuid
 from typing import List, Dict, Any, Optional
 
-TNode = Dict[str, Any]
-TArc = Dict[str, Any]
+@dataclass
+class TArc:
+    id: str
+    label: str
+    props: Dict[str, Any]
+    node_uri_from: str
+    node_uri_to: str
+
+@dataclass
+class TNode:
+    id: str
+    uri: str
+    labels: List[str]
+    props: Dict[str, Any]
+    arcs: Optional[List[TArc]] = None
 
 
 class Neo4jRepository:
@@ -30,23 +44,34 @@ class Neo4jRepository:
             return [self.collect_node(record["n"]) for record in result]
 
     def get_all_nodes_and_arcs(self) -> List[TNode]:
-        query = "MATCH (n)-[r]->(m) RETURN n, r, m"
-        nodes: Dict[str, TNode] = {}
-        with self.driver.session() as session:
-            for record in session.run(query):
-                n = self.collect_node(record["n"])
-                m = self.collect_node(record["m"])
-                r = self.collect_arc(record["r"], n["uri"], m["uri"])
+        query = """
+        MATCH (n)-[r]->(m)
+        RETURN n, r, m.uri as to_uri, type(r) as rel_type
+        """
 
-                if n["uri"] not in nodes:
-                    nodes[n["uri"]] = n
-                    nodes[n["uri"]]["arcs"] = []
-                if m["uri"] not in nodes:
-                    nodes[m["uri"]] = m
-                    nodes[m["uri"]]["arcs"] = []
+        with self.driver.session(database=self.database) as session:
+            result = session.run(query)
+            nodes_dict = {}
 
-                nodes[n["uri"]]["arcs"].append(r)
-        return list(nodes.values())
+            for record in result:
+                node_data = record["n"]
+                arc_data = record["r"]
+                to_uri = record["to_uri"]
+                rel_type = record["rel_type"]
+
+                node_uri = node_data.get("uri")
+
+                if node_uri not in nodes_dict:
+                    nodes_dict[node_uri] = self.collect_node(node_data)
+                    nodes_dict[node_uri].arcs = []
+
+                arc = self.collect_arc(arc_data)
+                arc.node_uri_from = node_uri
+                arc.node_uri_to = to_uri
+                arc.label = rel_type
+                nodes_dict[node_uri].arcs.append(arc)
+
+            return list(nodes_dict.values())
 
     def get_nodes_by_labels(self, labels: List[str]) -> List[TNode]:
         label_str = ":".join(labels)
@@ -62,11 +87,12 @@ class Neo4jRepository:
             return self.collect_node(record["n"]) if record else None
 
     def create_node(self, params: Dict[str, Any], labels: Optional[List[str]] = None) -> TNode:
-        uri = self.generate_random_string()
+        if not params["uri"]:
+            params["uri"] = self.generate_random_string()
 
         labels_str = ""
         if labels:
-            labels_str = ":" + ":".join(params.labels)
+            labels_str = ":" + ":".join(params["labels"])
 
         query = f"""
         CREATE (n{labels_str} {{
@@ -114,22 +140,28 @@ class Neo4jRepository:
             return self.collect_node(record["n"]) if record else None
 
     @staticmethod
-    def collect_node(node) -> TNode:
-        return {
-            "id": node.get("id"),
-            "uri": node.get("uri"),
-            "description": node.get("description"),
-            "title": node.get("title"),
-        }
+    def collect_node(node_data) -> TNode:
+        props = dict(node_data.items())
+
+        return TNode(
+            id=node_data.element_id,
+            uri=props.get("uri", ""),
+            labels=list(node_data.labels),
+            props=props,
+            arcs=None
+        )
 
     @staticmethod
-    def collect_arc(arc) -> TArc:
-        return {
-            "id": arc.get("id"),
-            "uri": arc.type,
-            "node_uri_from": arc.get("node_uri_from"),
-            "node_uri_to": arc.get("node_uri_to"),
-        }
+    def collect_arc(arc_data) -> TArc:
+        props = dict(arc_data.items())
+
+        return TArc(
+            id=arc_data.element_id,
+            label=arc_data.type,
+            props=props,
+            node_uri_from="",
+            node_uri_to=""
+        )
 
 
 class Main:
