@@ -1,8 +1,7 @@
-# file: entities.py
 from dataclasses import dataclass
-from typing import List, Dict, Any, Optional
+from typing import List, Optional
 
-from neo4j_repository import TNode
+from db.api.neo4j_repository import TNode
 
 
 @dataclass

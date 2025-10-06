@@ -1,5 +1,7 @@
-from entities import *
-from neo4j_repository import Neo4jRepository
+from typing import Dict, Any
+
+from .entities import *
+from .neo4j_repository import Neo4jRepository
 
 
 class OntologyRepository:

@@ -162,29 +162,3 @@ class Neo4jRepository:
             node_uri_from="",
             node_uri_to=""
         )
-
-
-class Main:
-    def __init__(self):
-        self.repository = Neo4jRepository(
-            uri="neo4j://127.0.0.1:7687",
-            user="neo4j",
-            password="12345678"
-        )
-
-    def simple_demo(self):
-        node = self.repository.create_node({
-            "title": "Тестовый узел",
-            "description": "Это тестовый узел для демонстрации"
-        })
-
-        pprint(f"Создан узел: {node['title']}")
-        pprint(f"URI узла: {node['uri']}")
-
-        self.repository.close()
-
-
-# Создание экземпляра и вызов функции
-if __name__ == "__main__":
-    app = Main()
-    app.simple_demo()
