@@ -21,7 +21,6 @@ def get_repo():
 # ================== ONTOLOGY ==================
 
 @api_view(['GET'])
-@permission_classes((AllowAny,))
 def get_ontology(request):
     repo = get_repo()
     ontology = repo.get_ontology()
@@ -32,7 +31,6 @@ def get_ontology(request):
 # ================== CLASS ==================
 
 @api_view(['GET'])
-@permission_classes((AllowAny,))
 def get_ontology_parent_classes(request):
     repo = get_repo()
     data = repo.get_ontology_parent_classes()
@@ -41,7 +39,6 @@ def get_ontology_parent_classes(request):
 
 
 @api_view(['GET'])
-@permission_classes((AllowAny,))
 def get_class(request):
     uri = request.GET.get("uri")
     if not uri:
@@ -53,7 +50,6 @@ def get_class(request):
 
 
 @api_view(['GET'])
-@permission_classes((AllowAny,))
 def get_class_parents(request):
     uri = request.GET.get("uri")
     repo = get_repo()
@@ -63,7 +59,6 @@ def get_class_parents(request):
 
 
 @api_view(['GET'])
-@permission_classes((AllowAny,))
 def get_class_children(request):
     uri = request.GET.get("uri")
     repo = get_repo()
@@ -73,7 +68,6 @@ def get_class_children(request):
 
 
 @api_view(['GET'])
-@permission_classes((AllowAny,))
 def get_class_objects(request):
     uri = request.GET.get("uri")
     repo = get_repo()
@@ -83,7 +77,6 @@ def get_class_objects(request):
 
 
 @api_view(['POST'])
-@permission_classes((IsAuthenticated,))
 def create_class(request):
     data = json.loads(request.body)
     title = data.get("title")
@@ -96,7 +89,6 @@ def create_class(request):
 
 
 @api_view(['PUT'])
-@permission_classes((IsAuthenticated,))
 def update_class(request):
     data = json.loads(request.body)
     uri = data.get("uri")
@@ -108,7 +100,6 @@ def update_class(request):
 
 
 @api_view(['DELETE'])
-@permission_classes((IsAuthenticated,))
 def delete_class(request):
     uri = request.GET.get("uri")
     repo = get_repo()
@@ -120,7 +111,6 @@ def delete_class(request):
 # ================== CLASS ATTRIBUTES ==================
 
 @api_view(['POST'])
-@permission_classes((IsAuthenticated,))
 def add_class_attribute(request):
     data = json.loads(request.body)
     class_uri = data.get("class_uri")
@@ -132,7 +122,6 @@ def add_class_attribute(request):
 
 
 @api_view(['DELETE'])
-@permission_classes((IsAuthenticated,))
 def delete_class_attribute(request):
     uri = request.GET.get("uri")
     repo = get_repo()
@@ -142,7 +131,6 @@ def delete_class_attribute(request):
 
 
 @api_view(['POST'])
-@permission_classes((IsAuthenticated,))
 def add_class_object_attribute(request):
     data = json.loads(request.body)
     class_uri = data["class_uri"]
@@ -155,7 +143,6 @@ def add_class_object_attribute(request):
 
 
 @api_view(['DELETE'])
-@permission_classes((IsAuthenticated,))
 def delete_class_object_attribute(request):
     uri = request.GET.get("uri")
     repo = get_repo()
@@ -165,7 +152,6 @@ def delete_class_object_attribute(request):
 
 
 @api_view(['POST'])
-@permission_classes((IsAuthenticated,))
 def add_class_parent(request):
     data = json.loads(request.body)
     parent_uri = data["parent_uri"]
@@ -179,7 +165,6 @@ def add_class_parent(request):
 # ================== OBJECTS ==================
 
 @api_view(['GET'])
-@permission_classes((AllowAny,))
 def get_object(request):
     uri = request.GET.get("uri")
     repo = get_repo()
@@ -189,7 +174,6 @@ def get_object(request):
 
 
 @api_view(['POST'])
-@permission_classes((IsAuthenticated,))
 def create_object(request):
     data = json.loads(request.body)
     class_uri = data["class_uri"]
@@ -201,7 +185,6 @@ def create_object(request):
 
 
 @api_view(['PUT'])
-@permission_classes((IsAuthenticated,))
 def update_object(request):
     data = json.loads(request.body)
     uri = data["uri"]
@@ -213,7 +196,6 @@ def update_object(request):
 
 
 @api_view(['DELETE'])
-@permission_classes((IsAuthenticated,))
 def delete_object(request):
     uri = request.GET.get("uri")
     repo = get_repo()
@@ -225,7 +207,6 @@ def delete_object(request):
 # ================== CLASS SIGNATURE ==================
 
 @api_view(['GET'])
-@permission_classes((AllowAny,))
 def collect_signature(request):
     uri = request.GET.get("uri")
     repo = get_repo()

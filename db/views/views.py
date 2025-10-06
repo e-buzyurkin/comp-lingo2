@@ -10,7 +10,6 @@ from db.api.text_repository import TextRepository
 # --- CORPUS ---
 
 @api_view(['GET'])
-@permission_classes((AllowAny,))
 def getCorpus(request):
     id = request.GET.get('id')
     if not id:
@@ -20,7 +19,6 @@ def getCorpus(request):
     return Response(result)
 
 @api_view(['POST'])
-@permission_classes((IsAuthenticated,))
 def createCorpus(request):
     data = json.loads(request.body.decode('utf-8'))
     repo = CorpusRepository()
@@ -28,7 +26,6 @@ def createCorpus(request):
     return JsonResponse(result)
 
 @api_view(['PUT'])
-@permission_classes((IsAuthenticated,))
 def updateCorpus(request, corpus_id):
     data = json.loads(request.body.decode('utf-8'))
     repo = CorpusRepository()
@@ -36,7 +33,6 @@ def updateCorpus(request, corpus_id):
     return JsonResponse(result)
 
 @api_view(['DELETE'])
-@permission_classes((IsAuthenticated,))
 def deleteCorpus(request):
     id = request.GET.get('id')
     if not id:
@@ -49,7 +45,6 @@ def deleteCorpus(request):
 # --- TEXT ---
 
 @api_view(['GET'])
-@permission_classes((AllowAny,))
 def getText(request):
     id = request.GET.get('id')
     if not id:
@@ -59,7 +54,6 @@ def getText(request):
     return Response(result)
 
 @api_view(['POST'])
-@permission_classes((IsAuthenticated,))
 def createText(request):
     data = json.loads(request.body.decode('utf-8'))
     repo = TextRepository()
@@ -67,7 +61,6 @@ def createText(request):
     return JsonResponse(result)
 
 @api_view(['PUT'])
-@permission_classes((IsAuthenticated,))
 def createText(request, text_id):
     data = json.loads(request.body.decode('utf-8'))
     repo = TextRepository()
@@ -75,7 +68,6 @@ def createText(request, text_id):
     return JsonResponse(result)
 
 @api_view(['DELETE'])
-@permission_classes((IsAuthenticated,))
 def deleteText(request):
     id = request.GET.get('id')
     if not id:
