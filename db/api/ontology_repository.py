@@ -170,18 +170,16 @@ class OntologyRepository:
     def delete_object(self, object_uri: str) -> None:
         self.repo.delete_node_by_uri(object_uri)
 
-    def create_object(self, class_uri: str, obj_params: list[Dict[str, Any]]) -> list[Object]:
-        created_objects = []
-        for params in obj_params:
-            obj = self.repo.create_node(params, labels=["Object", params["uri"]])
-            if params["direction"] == 1:
-                self.repo.create_arc(class_uri, obj.uri, params["rel_type"])
+    def create_object(self, params: Dict[str, Any], obj_params: list[Dict[str, Any]]) -> Object:
+        obj = self.repo.create_node(params, labels=["Object", params["uri"]])
+        for param in obj_params:
+            if param["direction"] == 1:
+                self.repo.create_arc(obj.uri, param["value_uri"], param["rel_type"])
             else:
-                self.repo.create_arc(obj.uri, class_uri, params["rel_type"])
+                self.repo.create_arc(param["value_uri"], obj.uri, param["rel_type"])
 
-            created_objects.append(obj)
 
-        return [collect_from_node(obj) for obj in created_objects]
+        return collect_from_node(obj)
 
     def update_object(self, object_uri: str, params: Dict[str, Any]) -> Optional[Object]:
         update_params = {"uri": params["uri"], "title": params["title"], "description": params["description"]}
