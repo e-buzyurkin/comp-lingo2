@@ -128,7 +128,8 @@ class OntologyRepository:
         MATCH (c:Class {uri: $uri})
         OPTIONAL MATCH (c)<-[:SUBCLASS_OF*]-(child:Class)
         OPTIONAL MATCH (c)<-[:rdf__type*]-(o:Object)
-        DETACH DELETE c, child, o
+        OPTIONAL MATCH (c)<-[:domain]-(q)
+        DETACH DELETE c, child, o, q
         """
         self.repo.run_custom_query(query, {"uri": class_uri})
 
