@@ -181,7 +181,7 @@ def create_object(request):
     repo = get_repo()
     obj = repo.create_object(class_uri, params)
     repo.repo.close()
-    return JsonResponse(obj.to_dict(), safe=False)
+    return JsonResponse(obj, safe=False)
 
 
 @api_view(['PUT'])
