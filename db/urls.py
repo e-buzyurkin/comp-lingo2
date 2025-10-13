@@ -1,5 +1,6 @@
 from django.urls import path
 from db.views import views, ontology_views
+from db.views import embedding_views
 
 urlpatterns = [
     # corpus
@@ -42,4 +43,8 @@ urlpatterns = [
 
     # Signatures
     path('api/class/signature/', ontology_views.collect_signature),
+
+    path("embeddings/chunk/", embedding_views.chunk_text),
+    path("embeddings/generate/", embedding_views.generate_embeddings),
+    path("embeddings/compare/", embedding_views.compare_embeddings),
 ]
