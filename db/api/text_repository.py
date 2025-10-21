@@ -1,4 +1,6 @@
 from db.models import Text, Corpus
+from db.utils.embedding_utils import EmbeddingUtils
+import json
 
 
 class TextRepository:
@@ -23,11 +25,15 @@ class TextRepository:
         corpus = Corpus.objects.get(pk=data["corpus"]) if "corpus" in data else None
         has_translation = Text.objects.get(pk=data["has_translation"]) if "has_translation" in data else None
 
+        emb_utils = EmbeddingUtils()
+        chunks = emb_utils.get_chunks(data["content"])
+
         text = Text.objects.create(
             title=data.get("title", ""),
             description=data.get("description", ""),
             content=data.get("content", ""),
             corpus=corpus,
+            embeddings=json.dumps(emb_utils.get_embeddings(chunks).tolist()),
             has_translation=has_translation,
         )
         return self.collect_text(text)
@@ -43,6 +49,10 @@ class TextRepository:
             text.corpus = Corpus.objects.get(pk=data["corpus"])
         if "has_translation" in data:
             text.has_translation = Text.objects.get(pk=data["has_translation"])
+
+        emb_utils = EmbeddingUtils()
+        chunks = emb_utils.get_chunks(data["content"])
+        text.embeddings = json.dumps(emb_utils.get_embeddings(chunks).tolist())
 
         text.save()
         return self.collect_text(text)
