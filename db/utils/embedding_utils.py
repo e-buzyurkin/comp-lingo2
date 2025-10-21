@@ -8,17 +8,20 @@ class EmbeddingUtils:
     def __init__(self):
         self.model = SentenceTransformer("sentence-transformers/paraphrase-multilingual-mpnet-base-v2")
 
-    def get_chunks(self, texts: Union[str, List[str]], max_chunk_size: int = 500) -> List[str]:
+    def get_chunks(self, texts: Union[str, List[str]]) -> List[str]:
         if isinstance(texts, str):
             texts = [texts]
 
         chunks = []
         for text in texts:
-            text = text.strip()
-            for i in range(0, len(text), max_chunk_size):
-                chunk = text[i:i + max_chunk_size].strip()
-                if chunk:
-                    chunks.append(chunk)
+            paragraphs = text.split('\n')
+
+            for paragraph in paragraphs:
+                paragraph = paragraph.strip()
+
+                if paragraph:
+                    chunks.append(paragraph)
+
         return chunks
 
     def get_embeddings(self, texts: Union[str, List[str]]) -> np.ndarray:
